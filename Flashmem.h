@@ -38,19 +38,23 @@ public:
 	virtual ~Flashmem();
 
 	// vars
-	uint16_t  num_page = 0;			// Ќомер страницы с которой будет начата запись
+	uint16_t num_page = 0;			// Ќомер страницы с которой будет начата запись
+	uint16_t page_shift = 0;		// Ќомер страницы в которую ведетьс€ запись (если записать на страницу num_page данные размеров в 4 страницы то page_shift бужет равна 3)
 	uint32_t main_mem_start = 0;	// јбсолютный адрес начала записи
 	uint32_t flash_ptr = 0;  		// —мещение адреса относительно указанной страницы page_num
 	const uint32_t flash_page_size = FLASH_PAGE_SIZE_BYTES;  // –азмер одной страницы во flash
 
 	// data 	- указатель на записываемые данные
-	// address  - адрес на странице начина€ с нул€
 	// count 	- количество записываемых байт, должно быть кратно 2
+	// ѕоследовательно записывает переданные данные
+	// јвтоматически очищает страницу пам€ти если происходит запись в еЄ начало
 	void flash_mem_write(uint8_t *data, uint32_t count);
 	void flash_erase_all_pages();
 
 	// –асчитывает адрес страницы через MAIN_MEM_START_ADDR, номер страницы и размер FLASH_PAGE_SIZE_BYTES
-	uint32_t get_page_addres();
+	uint32_t get_page_addres(uint16_t num_page);
+	// –асчитывает адрес конца страницы
+	uint32_t get_end_page_addr(uint16_t num_page);
 
 	// ”тановка и получение смещени€ адреса относительно страницы page_num
 	uint32_t get_flash_ptr();
@@ -64,6 +68,8 @@ private:
 	void flash_mem_erase(uint32_t pageAddress);
 	void unlock_flash();
 	void lock_flash();
+	bool check_new_page();
+	void enable_flash_programming(bool flag);  // –азрешает или запрещает программирование flash пам€ти
 	uint8_t flash_ready();
 
 // “есты
