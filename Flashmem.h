@@ -17,7 +17,13 @@
 
 #ifdef STM32F103xB
 #include "stm32f103xb.h"
-#define FLASH_PAGE_SIZE 1024  // bytes
+#define FLASH_PAGE_SIZE_BYTES 1024  // bytes
+#define PAGE_CNT 64
+#endif
+#ifdef STM32F303xC
+#include "stm32f303xc.h"
+#define FLASH_PAGE_SIZE_BYTES 2048  // bytes
+#define PAGE_CNT 128
 #endif
 
 #define MAIN_MEM_START_ADDR 0x08000000
@@ -28,7 +34,7 @@ public:
 	 * Если не определена директива FLASH_PAGE_SIZE, то придется указать вручную
 	 * flash_page_size Указывается в байтах
 	 * */
-#ifdef FLASH_PAGE_SIZE
+#ifdef FLASH_PAGE_SIZE_BYTES
 	Flashmem(uint8_t page_num);
 #else
 	Flashmem(uint8_t page_num, uint32_t flash_page_size);
@@ -36,15 +42,23 @@ public:
 	virtual ~Flashmem();
 
 	// vars
-	uint8_t page_num;
-	uint32_t main_mem_start;
+	uint8_t  page_num = 0;			// Номер страницы с которой будет начата запись
+	uint32_t main_mem_start = 0;	// Абсолютный адрес начала записи
+	uint32_t flash_ptr = 0;  		// Смещение адреса относительно указанной страницы page_num
 
 
 	// data 	- указатель на записываемые данные
 	// address  - адрес на странице начиная с нуля
 	// count 	- количество записываемых байт, должно быть кратно 2
-	void flash_mem_write(uint8_t *data, uint32_t address, uint32_t count);
+	void flash_mem_write(uint8_t *data, uint32_t count);
 	void flash_erase_all_pages();
+
+	// Утановка и получение смещения адреса относительно страницы page_num
+	uint32_t get_flash_ptr();
+	void set_flash_ptr(uint32_t addr);
+
+	// Получение абсолютного адреса
+	uint32_t get_main_mem_start();
 
 private:
 	// clear page on flash

@@ -7,25 +7,25 @@
 
 #include <Flashmem.h>
 
-#ifdef FLASH_PAGE_SIZE
+#ifdef FLASH_PAGE_SIZE_BYTES
 Flashmem::Flashmem(uint8_t page_num) {
 #else
 	Flashmem::Flashmem(uint8_t page_num, uint32_t flash_page_size) {
 #endif
 	this->page_num = page_num;
-#ifdef FLASH_PAGE_SIZE
-	this->main_mem_start = MAIN_MEM_START_ADDR | (FLASH_PAGE_SIZE * this->page_num);
+#ifdef FLASH_PAGE_SIZE_BYTES
+	this->main_mem_start = MAIN_MEM_START_ADDR | (FLASH_PAGE_SIZE_BYTES * this->page_num);
 #else
 	this->main_mem_start = MAIN_MEM_START_ADDR | (flash_page_size * this->page_num);
 #endif
 }
 
 Flashmem::~Flashmem() {
-	// TODO Auto-generated destructor stub
+	// pass
 }
 
-void Flashmem::flash_mem_write(uint8_t *data, uint32_t address, uint32_t count) {
-	// Todo - Дописать проверку на выход за пределы страницы
+void Flashmem::flash_mem_write(uint8_t *data, uint32_t count) {
+	// Todo - Реализовать запись в несколько страниц
 	this->unlock_flash();
 	this->flash_mem_erase(this->main_mem_start);
 	uint32_t i;
@@ -38,7 +38,8 @@ void Flashmem::flash_mem_write(uint8_t *data, uint32_t address, uint32_t count) 
 	FLASH->CR |= FLASH_CR_PG;
 
 	for (i = 0; i < count; i += 2) {
-		*(volatile uint16_t *)(this->main_mem_start+address + i) =
+		this->flash_ptr += i;
+		*(volatile uint16_t *)(this->main_mem_start + this->flash_ptr) =
 				(((uint16_t)data[i + 1]) << 8) + data[i];
 		while (!(FLASH->SR & FLASH_SR_EOP));
 		FLASH->SR = FLASH_SR_EOP;
@@ -55,6 +56,18 @@ void Flashmem::flash_erase_all_pages(void) {
 	FLASH->CR |= FLASH_CR_STRT; //Начать стирание
 	while(!this->flash_ready()) // Ожидание готовности.. Хотя оно уже наверное ни к чему здесь...
 		FLASH->CR &= FLASH_CR_MER;
+}
+
+uint32_t Flashmem::get_flash_ptr(){
+	return this->flash_ptr;
+}
+
+void Flashmem::set_flash_ptr(uint32_t addr){
+	this->flash_ptr = addr;
+}
+
+uint32_t Flashmem::get_main_mem_start(){
+	return this->main_mem_start;
 }
 
 void Flashmem::unlock_flash() {
