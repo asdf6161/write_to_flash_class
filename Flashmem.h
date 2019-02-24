@@ -34,24 +34,23 @@ public:
 	 * Если не определена директива FLASH_PAGE_SIZE, то придется указать вручную
 	 * flash_page_size Указывается в байтах
 	 * */
-#ifdef FLASH_PAGE_SIZE_BYTES
-	Flashmem(uint8_t page_num);
-#else
-	Flashmem(uint8_t page_num, uint32_t flash_page_size);
-#endif
+	Flashmem(uint16_t num_page);
 	virtual ~Flashmem();
 
 	// vars
-	uint8_t  page_num = 0;			// Номер страницы с которой будет начата запись
+	uint16_t  num_page = 0;			// Номер страницы с которой будет начата запись
 	uint32_t main_mem_start = 0;	// Абсолютный адрес начала записи
 	uint32_t flash_ptr = 0;  		// Смещение адреса относительно указанной страницы page_num
-
+	const uint32_t flash_page_size = FLASH_PAGE_SIZE_BYTES;  // Размер одной страницы во flash
 
 	// data 	- указатель на записываемые данные
 	// address  - адрес на странице начиная с нуля
 	// count 	- количество записываемых байт, должно быть кратно 2
 	void flash_mem_write(uint8_t *data, uint32_t count);
 	void flash_erase_all_pages();
+
+	// Расчитывает адрес страницы через MAIN_MEM_START_ADDR, номер страницы и размер FLASH_PAGE_SIZE_BYTES
+	uint32_t get_page_addres();
 
 	// Утановка и получение смещения адреса относительно страницы page_num
 	uint32_t get_flash_ptr();
